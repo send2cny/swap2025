@@ -5,7 +5,7 @@
     <div class="page-header">
         <h1><?php echo htmlspecialchars($item['title']); ?></h1>
         <div class="actions">
-            <?php if ($item['created_by'] == $current_user['id'] || $current_user['role'] === 'administrator'): ?>
+            <?php if (isset($current_user) && is_array($current_user) && ((isset($current_user['id']) && $item['created_by'] == $current_user['id']) || (isset($current_user['role']) && $current_user['role'] === 'administrator'))): ?>
                 <a href="index.php?controller=item&action=edit&id=<?php echo $item['id']; ?>" class="btn btn-primary">Edit</a>
                 <a href="index.php?controller=item&action=delete&id=<?php echo $item['id']; ?>" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
             <?php endif; ?>
