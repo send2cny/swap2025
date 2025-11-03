@@ -62,7 +62,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Update Item</button>
-                <a href="index.php?controller=item&action=view&id=<?php echo $item['id']; ?>" class="btn btn-secondary">Cancel</a>
+                <a href="index.php?controller=item&action=show&id=<?php echo $item['id']; ?>" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

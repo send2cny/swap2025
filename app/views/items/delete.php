@@ -35,7 +35,7 @@
 
         <div class="form-actions">
             <a href="index.php?controller=item&action=delete&id=<?php echo $item['id']; ?>&confirm=yes" class="btn btn-danger">Yes, Delete Item</a>
-            <a href="index.php?controller=item&action=view&id=<?php echo $item['id']; ?>" class="btn btn-secondary">Cancel</a>
+            <a href="index.php?controller=item&action=show&id=<?php echo $item['id']; ?>" class="btn btn-secondary">Cancel</a>
         </div>
     </div>
 </div>
