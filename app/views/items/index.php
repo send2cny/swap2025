@@ -81,7 +81,7 @@
                         <td><span class="badge badge-<?php echo $item['status']; ?>"><?php echo $item['status']; ?></span></td>
                         <td><?php echo htmlspecialchars($item['created_by_username'] ?? 'Unknown'); ?></td>
                         <td class="actions">
-                            <a href="index.php?controller=item&action=view&id=<?php echo $item['id']; ?>" class="btn btn-sm">View</a>
+                            <a href="index.php?controller=item&action=show&id=<?php echo $item['id']; ?>" class="btn btn-sm">View</a>
                             <?php if (isset($current_user) && is_array($current_user) && ((isset($current_user['id']) && $item['created_by'] == $current_user['id']) || (isset($current_user['role']) && $current_user['role'] === 'administrator'))): ?>
                                 <a href="index.php?controller=item&action=edit&id=<?php echo $item['id']; ?>" class="btn btn-sm">Edit</a>
                                 <a href="index.php?controller=item&action=delete&id=<?php echo $item['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>

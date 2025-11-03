@@ -344,7 +344,7 @@ index.php?controller=<name>&action=<method>&param=value
 
 ### Examples
 - Login: `?controller=auth&action=login`
-- View Item: `?controller=item&action=view&id=1`
+- View Item: `?controller=item&action=show&id=1`
 - List Items: `?controller=item&action=index`
 
 ## Support

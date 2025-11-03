@@ -104,7 +104,7 @@ class ItemController extends BaseController {
     /**
      * Show item details
      */
-    public function view() {
+    public function show() {
         $this->requireAuth();
 
         $id = (int)$this->getGet('id');
@@ -205,7 +205,7 @@ class ItemController extends BaseController {
         );
 
         if ($result['success']) {
-            $this->redirect('index.php?controller=item&action=view&id=' . $id . '&success=' . urlencode($result['message']));
+            $this->redirect('index.php?controller=item&action=show&id=' . $id . '&success=' . urlencode($result['message']));
         } else {
             $this->redirect('index.php?controller=item&action=edit&id=' . $id . '&error=' . urlencode($result['message']));
         }

@@ -163,7 +163,7 @@
                                 <td>$<?php echo number_format($item['price'], 2); ?></td>
                                 <td><span class="badge badge-<?php echo $item['status']; ?>"><?php echo $item['status']; ?></span></td>
                                 <td>
-                                    <a href="index.php?controller=item&action=view&id=<?php echo $item['id']; ?>" class="btn btn-sm">View</a>
+                                    <a href="index.php?controller=item&action=show&id=<?php echo $item['id']; ?>" class="btn btn-sm">View</a>
                                     <a href="index.php?controller=item&action=edit&id=<?php echo $item['id']; ?>" class="btn btn-sm">Edit</a>
                                 </td>
                             </tr>
