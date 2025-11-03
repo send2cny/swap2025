@@ -59,8 +59,8 @@ class BaseController {
                 $this->user = $_SESSION['user'];
                 $this->sessionToken = $_SESSION['session_token'];
 
-                // Check session timeout
-                if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
+                // Check session timeout (fail-safe: treat missing last_activity as expired)
+                if (!isset($_SESSION['last_activity']) || (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
                     $this->logout();
                     $this->redirect('index.php?controller=auth&action=login&error=session_expired');
                 }
