@@ -105,12 +105,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- Insert Default Users
 -- ==========================================
 -- Default password for all: "password123"
--- Password hash: $2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi
+-- Password hash: $2y$10$YlzC49aJ9RZ4GvpuO/LqmevUGvIV3hdPCNu0.pUrskv0eq0jzg8xG
 
 INSERT INTO users (username, email, password, full_name, role, status, email_verified) VALUES
-('admin', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', 'administrator', 'active', 1),
-('auditor', 'auditor@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Auditor', 'auditor', 'active', 1),
-('user', 'user@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Regular User', 'user', 'active', 1);
+('admin', 'admin@example.com', '$2y$10$YlzC49aJ9RZ4GvpuO/LqmevUGvIV3hdPCNu0.pUrskv0eq0jzg8xG', 'System Administrator', 'administrator', 'active', 1),
+('auditor', 'auditor@example.com', '$2y$10$YlzC49aJ9RZ4GvpuO/LqmevUGvIV3hdPCNu0.pUrskv0eq0jzg8xG', 'System Auditor', 'auditor', 'active', 1),
+('user', 'user@example.com', '$2y$10$YlzC49aJ9RZ4GvpuO/LqmevUGvIV3hdPCNu0.pUrskv0eq0jzg8xG', 'Regular User', 'user', 'active', 1);
 
 -- ==========================================
 -- Insert Sample Items
