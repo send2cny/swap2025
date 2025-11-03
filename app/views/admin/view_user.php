@@ -5,7 +5,7 @@
     <div class="page-header">
         <h1>User Details</h1>
         <div class="actions">
-            <?php if ($user['id'] != $current_user['id']): ?>
+            <?php if (isset($current_user) && is_array($current_user) && isset($current_user['id']) && $user['id'] != $current_user['id']): ?>
                 <a href="index.php?controller=admin&action=deleteUser&id=<?php echo $user['id']; ?>" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete User</a>
             <?php endif; ?>
             <a href="index.php?controller=admin&action=users" class="btn btn-secondary">Back to List</a>

@@ -53,7 +53,7 @@
                         <td><?php echo $user['last_login'] ? date('Y-m-d H:i', strtotime($user['last_login'])) : 'Never'; ?></td>
                         <td class="actions">
                             <a href="index.php?controller=admin&action=viewUser&id=<?php echo $user['id']; ?>" class="btn btn-sm">View</a>
-                            <?php if ($user['id'] != $current_user['id']): ?>
+                            <?php if (isset($current_user) && is_array($current_user) && isset($current_user['id']) && $user['id'] != $current_user['id']): ?>
                                 <a href="index.php?controller=admin&action=deleteUser&id=<?php echo $user['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
                             <?php endif; ?>
                         </td>

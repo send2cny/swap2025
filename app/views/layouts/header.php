@@ -13,22 +13,22 @@
                 <a href="<?php echo APP_URL; ?>/public/index.php"><?php echo APP_NAME; ?></a>
             </div>
             <div class="nav-menu">
-                <?php if (isset($current_user) && $current_user): ?>
+                <?php if (isset($current_user) && is_array($current_user) && !empty($current_user)): ?>
                     <a href="index.php?controller=dashboard&action=index">Dashboard</a>
                     <a href="index.php?controller=item&action=index">Items</a>
 
-                    <?php if ($current_user['role'] === 'administrator'): ?>
+                    <?php if (isset($current_user['role']) && $current_user['role'] === 'administrator'): ?>
                         <a href="index.php?controller=admin&action=users">Users</a>
                     <?php endif; ?>
 
-                    <?php if ($current_user['role'] === 'auditor' || $current_user['role'] === 'administrator'): ?>
+                    <?php if (isset($current_user['role']) && ($current_user['role'] === 'auditor' || $current_user['role'] === 'administrator')): ?>
                         <a href="index.php?controller=audit&action=index">Audit Logs</a>
                     <?php endif; ?>
 
                     <div class="dropdown">
                         <button class="dropbtn">
-                            <?php echo htmlspecialchars($current_user['username']); ?>
-                            (<?php echo htmlspecialchars($current_user['role']); ?>)
+                            <?php echo htmlspecialchars($current_user['username'] ?? 'User'); ?>
+                            (<?php echo htmlspecialchars($current_user['role'] ?? 'user'); ?>)
                         </button>
                         <div class="dropdown-content">
                             <a href="index.php?controller=auth&action=profile">Profile</a>
