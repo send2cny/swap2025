@@ -61,17 +61,44 @@ class BaseController {
 
                 // Check session timeout (fail-safe: treat missing last_activity as expired)
                 if (!isset($_SESSION['last_activity']) || (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
-                    $this->logout();
-                    $this->redirect('index.php?controller=auth&action=login&error=session_expired');
+                    $this->clearInvalidSession('session_expired');
+                    return;
                 }
 
                 $_SESSION['last_activity'] = time();
             } else {
-                // Invalid session token, logout
-                $this->logout();
-                $this->redirect('index.php?controller=auth&action=login&error=session_invalid');
+                // Invalid session token - clear it
+                $this->clearInvalidSession('session_invalid');
             }
         }
+    }
+
+    /**
+     * Clear invalid session data
+     * For public routes: silently clear without redirect
+     * For protected routes: clear and store error for display
+     */
+    protected function clearInvalidSession($errorType) {
+        // Destroy database session if exists
+        if (isset($_SESSION['session_token'])) {
+            $this->destroySessionToken($_SESSION['session_token']);
+        }
+
+        // Clear session data
+        $_SESSION = [];
+
+        // Check if this is a public route
+        $controller = $_GET['controller'] ?? 'dashboard';
+        $action = $_GET['action'] ?? 'index';
+        $controller = preg_replace('/[^a-zA-Z]/', '', $controller);
+        $action = preg_replace('/[^a-zA-Z]/', '', $action);
+        $currentRoute = "{$controller}:{$action}";
+
+        if (!in_array($currentRoute, $this->publicRoutes)) {
+            // For protected routes, redirect to login with error
+            $this->redirect('index.php?controller=auth&action=login&error=' . $errorType);
+        }
+        // For public routes, silently clear and continue
     }
 
     /**
