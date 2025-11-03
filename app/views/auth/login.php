@@ -11,6 +11,7 @@
                 $error_messages = [
                     'auth_required' => 'Please login to continue',
                     'session_expired' => 'Your session has expired. Please login again.',
+                    'session_invalid' => 'Your session is no longer valid. Please login again.',
                     'permission_denied' => 'Permission denied'
                 ];
                 echo htmlspecialchars($error_messages[$error] ?? $error);
