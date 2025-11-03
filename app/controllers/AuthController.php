@@ -50,7 +50,8 @@ class AuthController extends BaseController {
         $result = $this->userModel->login($username, $password);
 
         if ($result['success']) {
-            $this->setUserSession($result['user']);
+            // Set user session with database token
+            $this->setUserSession($result['user'], $result['session_token']);
 
             // Set remember me cookie if checked
             if ($remember) {
