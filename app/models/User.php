@@ -89,9 +89,10 @@ class User {
             return ['success' => false, 'message' => 'Username and password are required'];
         }
 
-        $query = "SELECT * FROM users WHERE username = :username OR email = :username LIMIT 1";
+        $query = "SELECT * FROM users WHERE username = :username OR email = :email LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':username', $username);
+        $stmt->bindParam(':email', $username);
         $stmt->execute();
 
         if ($stmt->rowCount() > 0) {
