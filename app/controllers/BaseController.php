@@ -6,10 +6,25 @@
 
 class BaseController {
     protected $user = null;
+    protected $sessionToken = null;
+
+    // Whitelist of public routes that don't require authentication
+    protected $publicRoutes = [
+        'auth:login',
+        'auth:doLogin',
+        'auth:register',
+        'auth:doRegister',
+        'auth:forgotPassword',
+        'auth:doForgotPassword',
+        'auth:resetPassword',
+        'auth:doResetPassword',
+        'dashboard:home'
+    ];
 
     public function __construct() {
         $this->startSession();
         $this->checkAuth();
+        $this->enforceAuthentication();
     }
 
     /**
@@ -30,19 +45,54 @@ class BaseController {
     }
 
     /**
-     * Check if user is authenticated
+     * Check if user is authenticated and validate session
      */
     protected function checkAuth() {
-        if (isset($_SESSION['user_id']) && isset($_SESSION['user'])) {
-            $this->user = $_SESSION['user'];
+        // Periodically clean expired sessions (1% chance on each request)
+        if (rand(1, 100) === 1) {
+            $this->cleanExpiredSessions();
+        }
 
-            // Check session timeout
-            if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
+        if (isset($_SESSION['user_id']) && isset($_SESSION['user']) && isset($_SESSION['session_token'])) {
+            // Validate session token from database
+            if ($this->validateSessionToken($_SESSION['session_token'], $_SESSION['user_id'])) {
+                $this->user = $_SESSION['user'];
+                $this->sessionToken = $_SESSION['session_token'];
+
+                // Check session timeout
+                if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
+                    $this->logout();
+                    $this->redirect('index.php?controller=auth&action=login&error=session_expired');
+                }
+
+                $_SESSION['last_activity'] = time();
+            } else {
+                // Invalid session token, logout
                 $this->logout();
-                $this->redirect('index.php?controller=auth&action=login&error=session_expired');
+                $this->redirect('index.php?controller=auth&action=login&error=session_invalid');
             }
+        }
+    }
 
-            $_SESSION['last_activity'] = time();
+    /**
+     * Enforce authentication for non-public routes
+     */
+    protected function enforceAuthentication() {
+        $controller = $_GET['controller'] ?? 'dashboard';
+        $action = $_GET['action'] ?? 'index';
+
+        // Sanitize
+        $controller = preg_replace('/[^a-zA-Z]/', '', $controller);
+        $action = preg_replace('/[^a-zA-Z]/', '', $action);
+
+        $currentRoute = "{$controller}:{$action}";
+
+        // Check if current route is public
+        if (!in_array($currentRoute, $this->publicRoutes)) {
+            // Require authentication for all non-public routes
+            if (!$this->isLoggedIn()) {
+                $this->redirect('index.php?controller=auth&action=login&error=auth_required');
+            }
         }
     }
 
@@ -88,25 +138,41 @@ class BaseController {
     }
 
     /**
-     * Set user session
+     * Set user session with database token
      */
-    protected function setUserSession($user) {
+    protected function setUserSession($user, $sessionToken = null) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user'] = $user;
         $_SESSION['last_activity'] = time();
+
+        // If session token provided, store it
+        if ($sessionToken) {
+            $_SESSION['session_token'] = $sessionToken;
+            $this->sessionToken = $sessionToken;
+        }
 
         // Regenerate session ID for security
         session_regenerate_id(true);
     }
 
     /**
-     * Logout user
+     * Logout user and destroy database session
      */
     protected function logout() {
+        // Destroy database session if exists
+        if (isset($_SESSION['session_token'])) {
+            $this->destroySessionToken($_SESSION['session_token']);
+        }
+
         $_SESSION = [];
 
         if (isset($_COOKIE[session_name()])) {
             setcookie(session_name(), '', time() - 3600, '/');
+        }
+
+        // Also delete remember_user cookie if exists
+        if (isset($_COOKIE['remember_user'])) {
+            setcookie('remember_user', '', time() - 3600, '/');
         }
 
         session_destroy();
@@ -272,5 +338,63 @@ class BaseController {
             'has_prev' => $current_page > 1,
             'has_next' => $current_page < $total_pages
         ];
+    }
+
+    /**
+     * Validate session token from database
+     */
+    protected function validateSessionToken($token, $userId) {
+        try {
+            $db = Database::getInstance();
+            $conn = $db->getConnection();
+
+            $query = "SELECT * FROM user_sessions
+                      WHERE session_token = :token
+                      AND user_id = :user_id
+                      AND expires_at > NOW()
+                      LIMIT 1";
+
+            $stmt = $conn->prepare($query);
+            $stmt->bindParam(':token', $token);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->execute();
+
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            // If there's an error, fail safely
+            return false;
+        }
+    }
+
+    /**
+     * Destroy session token from database
+     */
+    protected function destroySessionToken($token) {
+        try {
+            $db = Database::getInstance();
+            $conn = $db->getConnection();
+
+            $query = "DELETE FROM user_sessions WHERE session_token = :token";
+            $stmt = $conn->prepare($query);
+            $stmt->bindParam(':token', $token);
+            $stmt->execute();
+        } catch (PDOException $e) {
+            // Silent fail - session will expire anyway
+        }
+    }
+
+    /**
+     * Clean expired sessions from database
+     */
+    protected function cleanExpiredSessions() {
+        try {
+            $db = Database::getInstance();
+            $conn = $db->getConnection();
+
+            $query = "DELETE FROM user_sessions WHERE expires_at < NOW()";
+            $conn->exec($query);
+        } catch (PDOException $e) {
+            // Silent fail
+        }
     }
 }

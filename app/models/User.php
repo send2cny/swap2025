@@ -106,6 +106,9 @@ class User {
 
             // Verify password
             if (password_verify($password, $user['password'])) {
+                // Create session in database
+                $sessionToken = $this->createSession($user['id']);
+
                 // Update last login
                 $this->updateLastLogin($user['id']);
 
@@ -114,7 +117,12 @@ class User {
 
                 // Return user data (without password)
                 unset($user['password']);
-                return ['success' => true, 'message' => 'Login successful', 'user' => $user];
+                return [
+                    'success' => true,
+                    'message' => 'Login successful',
+                    'user' => $user,
+                    'session_token' => $sessionToken
+                ];
             } else {
                 $this->logAction($user['id'], 'LOGIN_FAILED_PASSWORD', 'users', $user['id']);
                 return ['success' => false, 'message' => 'Invalid password'];
@@ -393,5 +401,117 @@ class User {
             return ['success' => true, 'message' => 'User deleted successfully'];
         }
         return ['success' => false, 'message' => 'Delete failed'];
+    }
+
+    /**
+     * Create session in database
+     */
+    public function createSession($userId) {
+        // Generate unique session token
+        $sessionToken = bin2hex(random_bytes(32));
+
+        // Calculate expiration time (SESSION_LIFETIME seconds from now)
+        $expiresAt = date('Y-m-d H:i:s', time() + SESSION_LIFETIME);
+
+        // Get IP address and user agent
+        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+        // Clean old sessions for this user (optional - keep only the latest one)
+        $this->cleanUserOldSessions($userId);
+
+        // Insert new session
+        $query = "INSERT INTO user_sessions (user_id, session_token, ip_address, user_agent, expires_at)
+                  VALUES (:user_id, :session_token, :ip_address, :user_agent, :expires_at)";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':session_token', $sessionToken);
+            $stmt->bindParam(':ip_address', $ipAddress);
+            $stmt->bindParam(':user_agent', $userAgent);
+            $stmt->bindParam(':expires_at', $expiresAt);
+            $stmt->execute();
+
+            return $sessionToken;
+        } catch (PDOException $e) {
+            // Return a token anyway - fall back to file sessions
+            return $sessionToken;
+        }
+    }
+
+    /**
+     * Clean expired sessions from database
+     */
+    public function cleanExpiredSessions() {
+        $query = "DELETE FROM user_sessions WHERE expires_at < NOW()";
+        try {
+            $this->conn->exec($query);
+        } catch (PDOException $e) {
+            // Silent fail
+        }
+    }
+
+    /**
+     * Clean old sessions for a user (keep only most recent)
+     */
+    private function cleanUserOldSessions($userId, $keepCount = 5) {
+        $query = "DELETE FROM user_sessions
+                  WHERE user_id = :user_id
+                  AND id NOT IN (
+                      SELECT id FROM (
+                          SELECT id FROM user_sessions
+                          WHERE user_id = :user_id2
+                          ORDER BY created_at DESC
+                          LIMIT :keep_count
+                      ) as keep_sessions
+                  )";
+
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':user_id2', $userId);
+            $stmt->bindParam(':keep_count', $keepCount, PDO::PARAM_INT);
+            $stmt->execute();
+        } catch (PDOException $e) {
+            // Silent fail - use simpler query as fallback
+            $fallbackQuery = "DELETE FROM user_sessions
+                             WHERE user_id = :user_id
+                             AND expires_at < NOW()";
+            $stmt = $this->conn->prepare($fallbackQuery);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->execute();
+        }
+    }
+
+    /**
+     * Destroy all sessions for a user
+     */
+    public function destroyUserSessions($userId) {
+        $query = "DELETE FROM user_sessions WHERE user_id = :user_id";
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->execute();
+        } catch (PDOException $e) {
+            // Silent fail
+        }
+    }
+
+    /**
+     * Get active session count for user
+     */
+    public function getUserSessionCount($userId) {
+        $query = "SELECT COUNT(*) as count FROM user_sessions
+                  WHERE user_id = :user_id AND expires_at > NOW()";
+        try {
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->execute();
+            $result = $stmt->fetch();
+            return $result['count'];
+        } catch (PDOException $e) {
+            return 0;
+        }
     }
 }
