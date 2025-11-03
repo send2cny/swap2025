@@ -114,7 +114,7 @@ class AuthController extends BaseController {
      * Logout
      */
     public function logout() {
-        $this->logout();
+        parent::logout();
         $this->redirect('index.php?controller=auth&action=login&success=' . urlencode('Logged out successfully'));
     }
 
